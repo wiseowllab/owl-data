@@ -85,6 +85,8 @@ def main():
 
     if errors:
         print("取得できなかった項目（前回の値を残します）:", *errors, sep="\n  ", file=sys.stderr)
+        for msg in errors:  # GitHubの実行画面の「Annotations」に、失敗した項目と理由を表示する
+            print("::error title=データ取得に失敗::" + str(msg).replace(chr(10), " ")[:300])
 
     # 内容（updated以外）が変わった時だけ、updated を更新して保存する
     def body(d):
