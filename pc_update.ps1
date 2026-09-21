@@ -1,4 +1,4 @@
-# このパソコンから、Substack（記事とNotes）とnoteを読み、data.json を更新して GitHub に保存する。
+﻿# このパソコンから、Substack（記事とNotes）とnoteを読み、data.json を更新して GitHub に保存する。
 # Windowsのタスクスケジューラから呼ばれる（ログオン時／毎日20時）。AIは使わない。記録は logs\pc_update.log。
 $ErrorActionPreference = 'Continue'
 Set-Location -LiteralPath $PSScriptRoot
@@ -10,6 +10,7 @@ function Log($m) { "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $m" | Add-Content 
 
 $env:GIT_TERMINAL_PROMPT = '0'
 $env:PYTHONIOENCODING = 'utf-8'
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Log 'start'
 
 # ログオン直後は、ネットに繋がるまで少し待つ（最大 約2分）
