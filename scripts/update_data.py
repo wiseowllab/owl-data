@@ -108,6 +108,35 @@ def substack_items(limit):
 
 
 
+SUBSTACK_HANDLE = "wiseowllab"
+NOTES = 3
+
+
+def substack_notes(limit):
+    """SubstackのNotes（自分の投稿のみ。他の人への返信は除く）。非公式の入口を使う。"""
+    hdr = dict(BROWSER_HEADERS, Accept="application/json")
+    prof = json.loads(get_with(f"https://substack.com/api/v1/user/{SUBSTACK_HANDLE}/public_profile", hdr))
+    uid = prof["id"]
+    feed = json.loads(get_with(f"https://substack.com/api/v1/reader/feed/profile/{uid}", hdr))
+    notes = []
+    for it in feed.get("items", []):
+        c = it.get("comment")
+        if not c or c.get("user_id") != uid or c.get("ancestor_path"):
+            continue  # 自分のNotesだけ（返信・他人の投稿は除く）
+        body = re.sub(r"\s+", " ", (c.get("body") or "")).strip()
+        if not body or not c.get("date") or not c.get("id"):
+            continue
+        text = body if len(body) <= 48 else body[:48].rstrip() + "…"
+        d = parsedate_to_datetime(c["date"]).astimezone(JST).date().isoformat() if not c["date"][:4].isdigit() else             datetime.fromisoformat(c["date"].replace("Z", "+00:00")).astimezone(JST).date().isoformat()
+        notes.append({"text": text, "url": f"https://substack.com/@{SUBSTACK_HANDLE}/note/c-{c['id']}", "date": d, "_k": c["date"]})
+    notes.sort(key=lambda n: n["_k"], reverse=True)
+    for n in notes:
+        n.pop("_k")
+    if not notes:
+        raise RuntimeError("Notesが0件")
+    return notes[:limit]
+
+
 def magazine_count():
     """noteのマガジンページに表示される記事数（note_count）を読む。"""
     d = json.loads(get(f"https://note.com/api/v1/magazines/{NOTE_MAGAZINE}"))["data"]
@@ -141,6 +170,10 @@ def main():
         data["substack"]["latest"] = substack_items(LATEST)
     except Exception as e:
         warnings.append(f"Substack: {e}")
+    try:
+        data["substack"]["notes"] = substack_notes(NOTES)
+    except Exception as e:
+        warnings.append(f"SubstackのNotes: {e}")
 
     for msg in warnings:  # 失敗しても保存は続ける。実行画面に警告として残す
         print("::warning title=Substackを取得できませんでした（前回の値を残します）::" + str(msg).replace(chr(10), " ")[:400])
