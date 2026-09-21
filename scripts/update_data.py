@@ -50,6 +50,64 @@ def feed_items(url, limit):
     return items
 
 
+BROWSER_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+    "Accept": "application/rss+xml, application/xml;q=0.9, text/xml;q=0.8, */*;q=0.5",
+    "Accept-Language": "ja,en;q=0.8",
+}
+READER_HEADERS = {"User-Agent": "Feedly/1.0 (+http://www.feedly.com/fetcher.html; like FeedFetcher-Google)", "Accept": "*/*"}
+
+
+def get_with(url, headers):
+    req = urllib.request.Request(url, headers=headers)
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return r.read()
+
+
+def substack_items(limit):
+    """Substackの新着。RSS（ブラウザ風／フィード読み取り風）→ 記事一覧API の順に試す。"""
+    base = SUBSTACK_FEED.rsplit("/feed", 1)[0]
+    tries = []
+    for name, hdr in (("RSS/ブラウザ風", BROWSER_HEADERS), ("RSS/リーダー風", READER_HEADERS)):
+        def run(hdr=hdr):
+            root = ET.fromstring(get_with(SUBSTACK_FEED, hdr))
+            items = []
+            for it in root.iter("item"):
+                title = (it.findtext("title") or "").strip()
+                link = (it.findtext("link") or "").strip()
+                pub = it.findtext("pubDate")
+                if title and link and pub:
+                    d = parsedate_to_datetime(pub).astimezone(JST).date().isoformat()
+                    items.append({"title": clean_title(title), "url": link, "date": d})
+                if len(items) >= limit:
+                    break
+            return items
+        tries.append((name, run))
+
+    def api():
+        hdr = dict(BROWSER_HEADERS, Accept="application/json")
+        posts = json.loads(get_with(f"{base}/api/v1/archive?sort=new&limit={limit}", hdr))
+        items = []
+        for x in posts:
+            d = (x.get("post_date") or "")[:10]
+            if x.get("title") and x.get("canonical_url") and d:
+                items.append({"title": clean_title(x["title"]), "url": x["canonical_url"], "date": d})
+        return items[:limit]
+    tries.append(("記事一覧API", api))
+
+    reasons = []
+    for name, fn in tries:
+        try:
+            items = fn()
+            if items:
+                return items
+            reasons.append(f"{name}: 0件")
+        except Exception as e:
+            reasons.append(f"{name}: {e}")
+    raise RuntimeError(" / ".join(reasons))
+
+
+
 def magazine_count():
     """noteのマガジンページに表示される記事数（note_count）を読む。"""
     d = json.loads(get(f"https://note.com/api/v1/magazines/{NOTE_MAGAZINE}"))["data"]
@@ -67,6 +125,7 @@ def main():
     data.setdefault("note", {})
     data.setdefault("substack", {})
     errors = []
+    warnings = []
 
     try:
         data["note"]["latest"] = feed_items(f"https://note.com/{NOTE_USER}/rss", LATEST)
@@ -79,10 +138,12 @@ def main():
     except Exception as e:
         errors.append(f"note本数: {e}")
     try:
-        data["substack"]["latest"] = feed_items(SUBSTACK_FEED, LATEST)
+        data["substack"]["latest"] = substack_items(LATEST)
     except Exception as e:
-        errors.append(f"Substack: {e}")
+        warnings.append(f"Substack: {e}")
 
+    for msg in warnings:  # 失敗しても保存は続ける。実行画面に警告として残す
+        print("::warning title=Substackを取得できませんでした（前回の値を残します）::" + str(msg).replace(chr(10), " ")[:400])
     if errors:
         print("取得できなかった項目（前回の値を残します）:", *errors, sep="\n  ", file=sys.stderr)
         for msg in errors:  # GitHubの実行画面の「Annotations」に、失敗した項目と理由を表示する
