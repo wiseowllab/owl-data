@@ -32,6 +32,11 @@
   "substack": {
     "latest": [
       {
+        "title": "AIで何でもできるようになったら、副業が進まなくなった",
+        "url": "https://wiseowllab.substack.com/p/ai",
+        "date": "2026-10-05"
+      },
+      {
         "title": "ホテルにチェックインしたら、嫌な人が僕の頭の中からチェックアウトした",
         "url": "https://wiseowllab.substack.com/p/2fc",
         "date": "2026-09-28"
@@ -50,11 +55,6 @@
         "title": "僕は自己中です。でも、なぜか人に感謝されました",
         "url": "https://wiseowllab.substack.com/p/04b",
         "date": "2026-09-12"
-      },
-      {
-        "title": "「まとまった時間」をつくるのを、いったん諦めてみた",
-        "url": "https://wiseowllab.substack.com/p/b9c",
-        "date": "2026-09-07"
       }
     ],
     "notes": [
@@ -75,5 +75,5 @@
       }
     ]
   },
-  "updated": "2026-10-05T19:17+09:00"
+  "updated": "2026-10-05T21:04+09:00"
 }
