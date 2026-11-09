@@ -32,6 +32,11 @@
   "substack": {
     "latest": [
       {
+        "title": "寄り道は、ムダか",
+        "url": "https://wiseowllab.substack.com/p/d20",
+        "date": "2026-11-09"
+      },
+      {
         "title": "なぜAI副業は「調べるほど」怖くなるのか――僕が最初の一歩を踏み出せなかった本当の理由",
         "url": "https://wiseowllab.substack.com/p/ai-f81",
         "date": "2026-11-02"
@@ -50,11 +55,6 @@
         "title": "Kindle本執筆を最優先に。そのために決めた「やらないこと」",
         "url": "https://wiseowllab.substack.com/p/kindle",
         "date": "2026-10-12"
-      },
-      {
-        "title": "AIで何でもできるようになったら、副業が進まなくなった",
-        "url": "https://wiseowllab.substack.com/p/ai",
-        "date": "2026-10-05"
       }
     ],
     "notes": [
@@ -75,5 +75,5 @@
       }
     ]
   },
-  "updated": "2026-11-08T10:50+09:00"
+  "updated": "2026-11-09T09:59+09:00"
 }
